@@ -1,0 +1,134 @@
+{% extends 'makeup_exam/base.html' %}
+
+{% block title %}Öğrenci Paneli{% endblock %}
+
+{% block sidebar_links %}
+    
+    <li class="nav-item">
+        <a class="nav-link active" href="{% url 'student_dashboard' %}">
+            <i class="bi bi-grid-1x2-fill"></i> Dashboard
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if request.resolver_match.url_name == 'student_announcements' %}active{% endif %}" href="{% url 'student_announcements' %}">
+            <i class="bi bi-megaphone-fill"></i> Announcement
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if request.resolver_match.url_name == 'student_schedule' %}active{% endif %}" href="{% url 'student_schedule' %}">
+            <i class="bi bi-calendar-week-fill"></i> Schedule
+        </a>
+    </li>
+    
+    <li class="nav-item"> <a class="nav-link" href="{% url 'stix_page' %}"><span class="badge bg-warning text-dark">S</span> STIX</a></li>
+    <li class="nav-item"> <a class="nav-link" href="{% url 'obs_page' %}"><span class="badge bg-primary">O</span> OBS</a></li>
+    <li class="nav-item"> <a class="nav-link" href="{% url 'alms_page' %}"><span class="badge bg-danger">A</span> ALMS</a></li>
+{% endblock %}
+
+{% block page_title %}Courses{% endblock %}
+
+{% block content %}
+    <style>
+        .course-card {
+            background-color: #fff;
+            border-radius: 0.75rem;
+            padding: 1.25rem 1.5rem;
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            text-decoration: none;
+            color: inherit;
+        }
+        .course-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+            color: inherit;
+        }
+        .course-card .course-info .course-name {
+            font-weight: 600;
+            color: #343a40;
+            margin-bottom: 0.25rem;
+            display: block;
+        }
+        .course-card .course-info .update-date {
+            font-size: 0.75rem;
+            color: #adb5bd;
+        }
+        .course-card .grade-badge {
+            display: flex;
+            align-items: center;
+            font-weight: 700;
+            font-size: 0.9rem;
+            padding: 0.4rem 0.8rem;
+            border-radius: 50px;
+            min-width: 50px;
+            justify-content: center;
+        }
+        
+        .grade-badge .makeup-alert { 
+            color: #dc3545; 
+            margin-left: 0.5rem;
+            font-size: 1.1rem;
+            line-height: 1;
+        }
+        .grade-badge .resit-info-icon { 
+            color: #0d6efd; 
+            margin-left: 0.5rem;
+            font-size: 1rem;
+            line-height: 1;
+        }
+    </style>
+
+    {% if enrollments %}
+        <div class="row">
+            {% for enrollment in enrollments %}
+                <div class="col-md-6">
+                    <a href="{% url 'student_course_detail' enrollment.id %}" class="course-card">
+                        <div class="course-info">
+                            <span class="course-name">{{ enrollment.course.course_name }}</span>
+                            <span class="update-date">
+                                
+                                {% if enrollment.resit_grade_entry and enrollment.resit_grade_entry.grade is not None %}
+                                    Grade after resit
+                                {% else %}
+                                    Last updated: {% now "d.m.Y" %} 
+                                {% endif %}
+                            </span>
+                        </div>
+
+                        
+                        {% with resit_entry=enrollment.resit_grade_entry %}
+                            {% if resit_entry and resit_entry.grade is not None %}
+                                
+                                {% with new_letter_grade=resit_entry.get_new_letter_grade_with_resit %}
+                                    <div class="grade-badge grade-{{ new_letter_grade|lower }}">
+                                        {{ new_letter_grade }}
+                                        
+                                        <i class="bi bi-info-circle-fill resit-info-icon ms-1" title="Grade updated after resit exam"></i>
+                                    </div>
+                                {% endwith %}
+                            {% else %}
+                                
+                                <div class="grade-badge grade-{{ enrollment.get_letter_grade|lower }}">
+                                    {{ enrollment.get_letter_grade }}
+                                    
+                                    {% if enrollment.is_eligible_for_makeup and not enrollment.applied_for_makeup %}
+                                        <i class="bi bi-exclamation-circle-fill makeup-alert" title="Resit Exam Eligible"></i>
+                                    
+                                    {% elif enrollment.applied_for_makeup %}
+                                         <i class="bi bi-hourglass-split makeup-alert text-primary" title="Resit Application Submitted - Grade Pending"></i>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        {% endwith %}
+                    </a>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="text-muted">Henüz kayıtlı olduğunuz bir ders bulunmamaktadır.</p>
+    {% endif %}
+{% endblock %}

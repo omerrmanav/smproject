@@ -1,0 +1,110 @@
+{% extends 'makeup_exam/base.html' %}
+
+{% block title %}Duyurular ve Dosyalar{% endblock %}
+
+{% block sidebar_links %}
+    {# Öğretmen sidebar linkleri - Announcement aktif #}
+    <li class="nav-item">
+        <a class="nav-link {% if request.resolver_match.url_name == 'teacher_dashboard' %}active{% endif %}" href="{% url 'teacher_dashboard' %}">
+            <i class="bi bi-grid-1x2-fill"></i> Dashboard
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link active" href="{% url 'teacher_announcements' %}"> {# Bu link aktif #}
+            <i class="bi bi-megaphone-fill"></i> Announcement
+        </a>
+    </li>
+     <li class="nav-item">
+        <a class="nav-link {% if request.resolver_match.url_name == 'teacher_grades' or 'teacher_course_detail' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'teacher_grades' %}">
+             <i class="bi bi-pencil-square"></i> Grades
+        </a>
+     </li>
+     <li class="nav-item">
+        <a class="nav-link {% if request.resolver_match.url_name == 'teacher_resit_applications' %}active{% endif %}" href="{% url 'teacher_resit_applications' %}">
+             <i class="bi bi-person-check-fill"></i> Resit Apps
+        </a>
+     </li>
+    <li class="nav-item">
+        <a class="nav-link {% if request.resolver_match.url_name == 'teacher_schedule' %}active{% endif %}" href="{% url 'teacher_schedule' %}">
+            <i class="bi bi-calendar-week-fill"></i> Schedule
+        </a>
+    </li>
+    <li class="nav-item"> <a class="nav-link" href="{% url 'stix_page' %}"><span class="badge bg-warning text-dark">S</span> STIX</a></li>
+    <li class="nav-item"> <a class="nav-link" href="{% url 'obs_page' %}"><span class="badge bg-primary">O</span> OBS</a></li>
+    <li class="nav-item"> <a class="nav-link" href="{% url 'alms_page' %}"><span class="badge bg-danger">A</span> ALMS</a></li>
+{% endblock %}
+
+{% block page_title %}Announcements & Files{% endblock %}
+
+{% block content %}
+    {# Bütünleme Sınavı Duyuruları Bölümü #}
+    <h4 class="mb-3">Resit Exam Announcements</h4>
+    {% if resit_exam_announcements %}
+        {% for resit_ann in resit_exam_announcements %}
+            <div class="announcement-card mb-4">
+                <h5>{{ resit_ann.title }} {% if resit_ann.course %}({{ resit_ann.course.course_code }}){% endif %}</h5>
+                <div class="announcement-meta mb-2">
+                    <small class="text-muted">Exam: {{ resit_ann.exam_datetime|date:"d M Y, H:i" }} at {{ resit_ann.exam_place }}</small><br>
+                    <small class="text-muted">Posted: {{ resit_ann.posted_at|date:"d M Y H:i" }} by {{ resit_ann.posted_by.get_full_name|default:resit_ann.posted_by.username|default:'Faculty' }}</small>
+                </div>
+                <div class="announcement-content mb-2">
+                    {{ resit_ann.additional_info|linebreaksbr|default:"No additional information." }}
+                </div>
+                {% if resit_ann.attached_file %}
+                    <div class="announcement-attachments mt-2">
+                        <a href="{{ resit_ann.attached_file.url }}" target="_blank" class="attachment-link" download>
+                            <i class="bi bi-file-earmark-arrow-down-fill"></i>
+                            {{ resit_ann.attached_file.name|cut:"resit_exam_files/"|cut:resit_ann.id|cut:"/"|default:"Attached File" }}
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="alert alert-light" role="alert">
+          There are currently no resit exam announcements.
+        </div>
+    {% endif %}
+
+    <hr class="my-4">
+
+    {# Genel Duyurular Bölümü #}
+    <h4 class="mb-3">General Announcements</h4>
+    {% if announcements %} {# Context'te 'announcements' olarak gönderiliyor #}
+        {% for announcement in announcements %}
+            {% include 'makeup_exam/common/_announcement_card.html' with announcement=announcement %}
+        {% endfor %}
+    {% else %}
+        <div class="alert alert-light" role="alert">
+          There are currently no general announcements published.
+        </div>
+    {% endif %}
+
+    <hr class="my-4">
+
+    {# Yüklenmiş Genel Dosyalar Bölümü #}
+    <h4 class="mb-3">Uploaded General Files</h4>
+    {% if uploaded_files %}
+        <div class="card shadow-sm">
+             <div class="list-group list-group-flush">
+                {% for file in uploaded_files %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center flex-wrap">
+                        <div class="me-auto mb-2 mb-sm-0">
+                            <strong>{{ file.title }}</strong>
+                            <small class="text-muted d-block">
+                                Uploaded by: {{ file.uploader.get_full_name|default:file.uploader.username|default:'Faculty' }} - {{ file.uploaded_at|date:"d M Y H:i" }}
+                            </small>
+                        </div>
+                        <a href="{{ file.file.url }}" class="btn btn-sm btn-outline-primary" target="_blank" download>
+                            <i class="bi bi-download me-1"></i> Download
+                        </a>
+                    </div>
+                {% endfor %}
+             </div>
+        </div>
+    {% else %}
+        <div class="alert alert-light" role="alert">
+          There are currently no general files uploaded.
+        </div>
+    {% endif %}
+{% endblock %}

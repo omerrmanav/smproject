@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Kontrol Paneli{% endblock %} - RApp</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fa; 
+            display: flex;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        .sidebar {
+            width: 260px; 
+            background-color: #1a237e; 
+            color: #fff;
+            padding: 1.5rem 1rem;
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+        }
+        .sidebar .sidebar-header {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 2rem;
+            padding-left: 0.5rem;
+        }
+        .sidebar .nav-link {
+            color: #e0e0e0; 
+            padding: 0.8rem 1rem;
+            margin-bottom: 0.5rem;
+            border-radius: 0.375rem;
+            display: flex;
+            align-items: center;
+            font-weight: 500;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+        .sidebar .nav-link .bi {
+            margin-right: 0.8rem;
+            font-size: 1.2rem;
+            width: 20px;
+            text-align: center;
+        }
+         .sidebar .nav-link .badge { 
+             width: 20px;
+             height: 20px;
+             border-radius: 50%;
+             display: inline-flex;
+             justify-content: center;
+             align-items: center;
+             font-size: 0.7rem;
+             font-weight: bold;
+             margin-right: 0.8rem;
+         }
+        .sidebar .nav-link:hover {
+            background-color: rgba(255, 255, 255, 0.1); 
+            color: #fff;
+        }
+        .sidebar .nav-link.active {
+            background-color: #fff; 
+            color: #1a237e; 
+            font-weight: 600;
+        }
+         .sidebar .nav-link.active .bi {
+             color: #1a237e; 
+         }
+        .sidebar .logout-link {
+            margin-top: auto; 
+        }
+        
+        .main-content {
+            margin-left: 260px; 
+            padding: 0;
+            width: calc(100% - 260px);
+            flex-grow: 1;
+        }
+        .top-navbar {
+            background-color: #fff; 
+            border-bottom: 1px solid #dee2e6;
+            padding: 0.75rem 2rem;
+            height: 65px;
+            display: flex;
+            justify-content: flex-end; 
+            align-items: center;
+        }
+        .top-navbar .user-info {
+            display: flex;
+            align-items: center;
+            color: #495057;
+        }
+        .top-navbar .user-info .bi-bell { 
+            font-size: 1.3rem;
+            margin-right: 1rem;
+            color: #6c757d;
+            cursor: pointer;
+        }
+        .top-navbar .user-info .user-name {
+            font-weight: 500;
+            margin-right: 0.75rem;
+        }
+        .top-navbar .user-info img { 
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 1px solid #dee2e6;
+        }
+        .content-area {
+             padding: 2rem; 
+        }
+        
+        .grade-summary { display: flex; justify-content: space-around; text-align: center; background-color: #fff; padding: 1.5rem 1rem; border-radius: 0.5rem; border: 1px solid #e9ecef; box-shadow: 0 2px 4px rgba(0,0,0,0.03); margin-bottom: 2rem; }
+        .grade-summary .grade-item { flex: 1; }
+        .grade-summary .grade-item .grade-label { font-size: 0.85rem; color: #6c757d; margin-bottom: 0.5rem; display: block; font-weight: 500; }
+        .grade-summary .grade-item .grade-value { font-size: 1.5rem; font-weight: 700; color: #212529; }
+        .grade-summary .grade-item .grade-value.grade-ff, .grade-summary .grade-item .grade-value.grade-dc { color: #dc3545; }
+        .grade-summary .grade-item .grade-value.grade-cc, .grade-summary .grade-item .grade-value.grade-cb { color: #0d6efd; }
+        .grade-summary .grade-item .grade-value.grade-bb, .grade-summary .grade-item .grade-value.grade-ba, .grade-summary .grade-item .grade-value.grade-aa { color: #198754; }
+        .resit-details { background-color: #fff; padding: 1.5rem; border-radius: 0.5rem; border: 1px solid #e9ecef; box-shadow: 0 2px 4px rgba(0,0,0,0.03); margin-bottom: 2rem; }
+        .resit-details h5 { font-weight: 600; margin-bottom: 1rem; }
+        .resit-details p { margin-bottom: 0.5rem; color: #495057; font-size: 0.95rem; }
+        .resit-details p strong { color: #212529; min-width: 60px; display: inline-block; }
+        .btn-resit-register { background-color: #ffc107; border-color: #ffc107; color: #343a40; font-weight: 600; padding: 0.75rem 1.5rem; }
+        .btn-resit-register:hover { background-color: #e0a800; border-color: #d39e00; color: #343a40; }
+        .btn-resit-register:disabled { background-color: #e9ecef; border-color: #e9ecef; color: #6c757d; cursor: not-allowed; }
+        
+        .announcement-card { background-color: #fff; border-radius: 0.5rem; padding: 1.5rem; border: 1px solid #e9ecef; box-shadow: 0 2px 4px rgba(0,0,0,0.03); margin-bottom: 1.5rem;}
+        .announcement-card h5 { font-weight: 600; margin-bottom: 0.25rem; color: #212529; }
+        .announcement-card .announcement-meta { font-size: 0.8rem; color: #6c757d; }
+        .announcement-card .announcement-content { font-size: 0.95rem; color: #495057; line-height: 1.6; }
+        .announcement-attachments .attachment-link { display: inline-block; background-color: #e9ecef; border-radius: 0.25rem; padding: 0.4rem 0.8rem; font-size: 0.85rem; color: #495057; text-decoration: none; transition: background-color 0.2s ease; }
+        .announcement-attachments .attachment-link:hover { background-color: #dee2e6; }
+        .announcement-attachments .attachment-link .bi { margin-right: 0.4rem; color: #6c757d; }
+        
+        @media (max-width: 992px) {
+            .sidebar { width: 100%; height: auto; position: static; flex-direction: row; overflow-x: auto; padding: 0.5rem; align-items: center; }
+            .sidebar .sidebar-header { margin-bottom: 0; margin-right: 1rem; padding-left: 0.5rem; font-size: 1.2rem; }
+            .sidebar .nav { flex-direction: row !important; }
+            .sidebar .nav-link { margin-bottom: 0; margin-right: 0.5rem; padding: 0.5rem 0.8rem; }
+            .sidebar .logout-link { margin-top: 0; margin-left: auto; }
+            .main-content { margin-left: 0; width: 100%; }
+            .content-area { padding: 1.5rem; }
+            .grade-summary { flex-direction: column; text-align: left; padding: 1rem; }
+            .grade-summary .grade-item { margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid #e9ecef; }
+            .grade-summary .grade-item:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+            .grade-summary .grade-item .grade-label { margin-bottom: 0.25rem; }
+            .grade-summary .grade-item .grade-value { font-size: 1.2rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-header">RApp</div>
+        <ul class="nav flex-column">
+            
+            <li class="nav-item">
+                
+                <a class="nav-link {% if 'dashboard' in request.resolver_match.url_name %}active{% endif %}"
+                   href="{% if user.profile.role == 'student' %}{% url 'student_dashboard' %}{% elif user.profile.role == 'teacher' %}{% url 'teacher_dashboard' %}{% elif user.profile.role == 'faculty' %}{% url 'faculty_dashboard' %}{% else %}#{% endif %}">
+                    <i class="bi bi-grid-1x2-fill"></i> Dashboard
+                </a>
+            </li>
+            
+            {% if user.profile.role == 'student' or user.profile.role == 'teacher' %}
+            <li class="nav-item">
+                <a class="nav-link {% if 'announcements' in request.resolver_match.url_name %}active{% endif %}"
+                   href="{% if user.profile.role == 'student' %}{% url 'student_announcements' %}{% elif user.profile.role == 'teacher' %}{% url 'teacher_announcements' %}{% endif %}">
+                    <i class="bi bi-megaphone-fill"></i> Announcement
+                </a>
+            </li>
+            {% endif %}
+
+            
+            {% if user.profile.role == 'teacher' %}
+            <li class="nav-item">
+                <a class="nav-link {% if request.resolver_match.url_name == 'teacher_grades' or 'teacher_course_detail' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'teacher_grades' %}">
+                     <i class="bi bi-pencil-square"></i> Grades
+                </a>
+            </li>
+             <li class="nav-item">
+                <a class="nav-link {% if request.resolver_match.url_name == 'teacher_resit_applications' %}active{% endif %}" href="{% url 'teacher_resit_applications' %}">
+                     <i class="bi bi-person-check-fill"></i> Resit Apps
+                </a>
+             </li>
+            {% endif %}
+
+            
+             {% if user.profile.role == 'student' or user.profile.role == 'teacher' %}
+            <li class="nav-item">
+                <a class="nav-link {% if 'schedule' in request.resolver_match.url_name %}active{% endif %}"
+                   href="{% if user.profile.role == 'student' %}{% url 'student_schedule' %}{% elif user.profile.role == 'teacher' %}{% url 'teacher_schedule' %}{% endif %}">
+                    <i class="bi bi-calendar-week-fill"></i> Schedule
+                </a>
+            </li>
+            {% endif %}
+
+            
+            <li class="nav-item">
+                <a class="nav-link {% if request.resolver_match.url_name == 'stix_page' %}active{% endif %}" href="{% url 'stix_page' %}">
+                    <span class="badge bg-warning text-dark">S</span> STIX
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if request.resolver_match.url_name == 'obs_page' %}active{% endif %}" href="{% url 'obs_page' %}">
+                    <span class="badge bg-primary">O</span> OBS
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if request.resolver_match.url_name == 'alms_page' %}active{% endif %}" href="{% url 'alms_page' %}">
+                    <span class="badge bg-danger">A</span> ALMS
+                </a>
+            </li>
+            
+        </ul>
+        <a href="{% url 'logout' %}" class="nav-link logout-link mt-auto">
+            <i class="bi bi-box-arrow-left"></i> Log out
+        </a>
+    </div>
+
+    <div class="main-content">
+         <nav class="top-navbar">
+            <div class="user-info">
+                 <i class="bi bi-bell"></i>
+                 <span class="user-name">{{ user.get_full_name|default:user.username }}</span>
+                 
+                 <img src="https://placehold.co/36x36/adb5bd/ffffff?text={{ user.username.0|upper }}" alt="Profil Resmi">
+            </div>
+        </nav>
+        <div class="content-area">
+             {% if messages %}
+                
+                {% for message in messages %}
+                    <div class="alert alert-dismissible fade show {% if message.tags %}alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %}{% else %}alert-info{% endif %}" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+            <h2 class="mb-4">{% block page_title %}{% endblock %}</h2>
+            {% block content %}
+            {% endblock %}
+        </div>
+    </div>
+
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

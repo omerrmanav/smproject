@@ -1,0 +1,82 @@
+{% extends 'makeup_exam/base.html' %}
+
+{% block title %}Öğretmen Paneli{% endblock %}
+
+{% block sidebar_links %}
+    
+    <li class="nav-item">
+        <a class="nav-link {% if request.resolver_match.url_name == 'teacher_dashboard' %}active{% endif %}" href="{% url 'teacher_dashboard' %}">
+            <i class="bi bi-grid-1x2-fill"></i> Dashboard
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if request.resolver_match.url_name == 'teacher_announcements' %}active{% endif %}" href="{% url 'teacher_announcements' %}">
+            <i class="bi bi-megaphone-fill"></i> Announcement
+        </a>
+    </li>
+    
+    
+     <li class="nav-item">
+        
+        <a class="nav-link {% if 'teacher_course_detail' in request.resolver_match.url_name %}active{% endif %}" href="#">
+             <i class="bi bi-pencil-square"></i> Grades 
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if request.resolver_match.url_name == 'teacher_schedule' %}active{% endif %}" href="{% url 'teacher_schedule' %}">
+            <i class="bi bi-calendar-week-fill"></i> Schedule
+        </a>
+    </li>
+    
+    <li class="nav-item"> <a class="nav-link" href="#"><span class="badge bg-warning text-dark">S</span> STIX</a></li>
+    <li class="nav-item"> <a class="nav-link" href="#"><span class="badge bg-primary">O</span> OBS</a></li>
+    <li class="nav-item"> <a class="nav-link" href="#"><span class="badge bg-danger">A</span> ALMS</a></li>
+{% endblock %}
+
+{% block page_title %}Courses{% endblock %} 
+
+{% block content %}
+    
+    <style>
+        
+        .teacher-course-card {
+            background-color: #fff;
+            border-radius: 0.75rem;
+            padding: 1.5rem; 
+            margin-bottom: 1rem;
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 80px; 
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            text-decoration: none;
+            color: #343a40; 
+            font-weight: 600; 
+             font-size: 1.05rem; 
+        }
+        .teacher-course-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+            color: #1a237e; 
+        }
+    </style>
+
+    {% if courses %}
+        <div class="row">
+            {% for course in courses %}
+                <div class="col-md-6"> 
+                    <a href="{% url 'teacher_course_detail' course.id %}" class="teacher-course-card">
+                        <i class="bi bi-book-fill">
+                            {{ course.course_name }} 
+                        </i>
+                    </a>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-light" role="alert">
+          Henüz size atanmış bir ders bulunmamaktadır.
+        </div>
+    {% endif %}
+{% endblock %}

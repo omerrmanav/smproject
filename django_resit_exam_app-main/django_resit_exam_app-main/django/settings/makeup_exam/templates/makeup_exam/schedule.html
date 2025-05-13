@@ -1,0 +1,230 @@
+{% extends 'makeup_exam/base.html' %}
+
+{% block title %}
+    {% if user.profile.role == 'student' %}Ders Programı{% elif user.profile.role == 'teacher' %}Öğretim Programı{% else %}Program{% endif %}
+{% endblock %}
+
+{% block sidebar_links %}
+    
+    
+    {% if user.profile.role == 'student' %}
+        <li class="nav-item">
+            <a class="nav-link {% if request.resolver_match.url_name == 'student_dashboard' %}active{% endif %}" href="{% url 'student_dashboard' %}">
+                <i class="bi bi-grid-1x2-fill"></i> Dashboard
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if request.resolver_match.url_name == 'student_announcements' %}active{% endif %}" href="{% url 'student_announcements' %}">
+                <i class="bi bi-megaphone-fill"></i> Announcement
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link active" href="{% url 'student_schedule' %}"> 
+                <i class="bi bi-calendar-week-fill"></i> Schedule
+            </a>
+        </li>
+        <li class="nav-item"> <a class="nav-link" href="{% url 'stix_page' %}"><span class="badge bg-warning text-dark">S</span> STIX</a></li>
+        <li class="nav-item"> <a class="nav-link" href="{% url 'obs_page' %}"><span class="badge bg-primary">O</span> OBS</a></li>
+        <li class="nav-item"> <a class="nav-link" href="{% url 'alms_page' %}"><span class="badge bg-danger">A</span> ALMS</a></li>
+    {% elif user.profile.role == 'teacher' %}
+        <li class="nav-item">
+            <a class="nav-link {% if request.resolver_match.url_name == 'teacher_dashboard' %}active{% endif %}" href="{% url 'teacher_dashboard' %}">
+                <i class="bi bi-grid-1x2-fill"></i> Dashboard
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if request.resolver_match.url_name == 'teacher_announcements' %}active{% endif %}" href="{% url 'teacher_announcements' %}">
+                <i class="bi bi-megaphone-fill"></i> Announcement
+            </a>
+        </li>
+         <li class="nav-item">
+            <a class="nav-link {% if request.resolver_match.url_name == 'teacher_grades' or 'teacher_course_detail' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'teacher_grades' %}">
+                 <i class="bi bi-pencil-square"></i> Grades
+            </a>
+         </li>
+         <li class="nav-item">
+            <a class="nav-link {% if request.resolver_match.url_name == 'teacher_resit_applications' %}active{% endif %}" href="{% url 'teacher_resit_applications' %}">
+                 <i class="bi bi-person-check-fill"></i> Resit Apps
+            </a>
+         </li>
+        <li class="nav-item">
+            <a class="nav-link active" href="{% url 'teacher_schedule' %}"> 
+                <i class="bi bi-calendar-week-fill"></i> Schedule
+            </a>
+        </li>
+        <li class="nav-item"> <a class="nav-link" href="{% url 'stix_page' %}"><span class="badge bg-warning text-dark">S</span> STIX</a></li>
+        <li class="nav-item"> <a class="nav-link" href="{% url 'obs_page' %}"><span class="badge bg-primary">O</span> OBS</a></li>
+        <li class="nav-item"> <a class="nav-link" href="{% url 'alms_page' %}"><span class="badge bg-danger">A</span> ALMS</a></li>
+    {% elif user.profile.role == 'faculty' %}
+         <li class="nav-item">
+            <a class="nav-link active" href="{% url 'faculty_dashboard' %}"><i class="bi bi-person-workspace"></i> Dashboard</a>
+         </li>
+         <li class="nav-item"> <a class="nav-link" href="{% url 'stix_page' %}"><span class="badge bg-warning text-dark">S</span> STIX</a></li>
+         <li class="nav-item"> <a class="nav-link" href="{% url 'obs_page' %}"><span class="badge bg-primary">O</span> OBS</a></li>
+         <li class="nav-item"> <a class="nav-link" href="{% url 'alms_page' %}"><span class="badge bg-danger">A</span> ALMS</a></li>
+    {% endif %}
+{% endblock %}
+
+{% block page_title %}
+    {% if user.profile.role == 'student' %}My Schedule{% elif user.profile.role == 'teacher' %}Teaching Schedule{% else %}Schedule{% endif %}
+{% endblock %}
+
+{% block content %}
+    
+    <style>
+        .calendar { background-color: #fff; border-radius: 0.5rem; border: 1px solid #e9ecef; box-shadow: 0 2px 4px rgba(0,0,0,0.03); overflow: hidden; }
+        .calendar-header { display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; background-color: #f8f9fa; border-bottom: 1px solid #e9ecef; }
+        .calendar-header h5 { margin: 0; font-weight: 600; }
+        .calendar-header .nav-buttons button { background: none; border: none; font-size: 1.2rem; color: #6c757d; cursor: pointer; padding: 0.25rem 0.5rem;}
+        .calendar-header .nav-buttons button:hover { color: #1a237e; }
+        .calendar-body { padding: 1rem; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+        .calendar-grid .day-name { text-align: center; font-weight: 600; font-size: 0.8rem; color: #6c757d; padding-bottom: 0.5rem; }
+        .calendar-grid .day { text-align: center; padding: 0.5rem 0.25rem; font-size: 0.9rem; border-radius: 0.25rem; min-height: 90px; background-color: #fdfdff; color: #495057; cursor: default; transition: background-color 0.2s ease; border: 1px solid #f0f0f0; display: flex; flex-direction: column; justify-content: flex-start; align-items: center; }
+        .calendar-grid .day.empty { background-color: transparent; cursor: default; border: none; }
+        .calendar-grid .day.today { background-color: #1a237e; color: #fff; font-weight: 700; border: 2px solid #0d145a; }
+        .calendar-grid .day.today .day-number { color: #fff !important; }
+        .calendar-grid .day.other-month .day-number { color: #adb5bd; }
+        .calendar-grid .day .day-number { font-weight: 500; display:block; margin-bottom: 4px; }
+        .calendar-grid .day .event-list { width: 100%; margin-top: auto; }
+        .calendar-grid .day .event {
+            font-size: 0.65rem; 
+            background-color: #e0e7ff; 
+            color: #3341a8; 
+            padding: 2px 4px;
+            border-radius: 3px;
+            display: block;
+            margin-bottom: 2px; 
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 95%;
+            text-align: left;
+            border: 1px solid #c6d4ff; 
+        }
+        .calendar-grid .day .event .event-time { font-weight: 600; margin-right: 3px; }
+        .calendar-grid .day .event .event-location { font-style: italic; color: #5566c8; }
+    </style>
+
+    <div class="calendar">
+        <div class="calendar-header">
+            <div class="nav-buttons">
+                <button id="prev-month" aria-label="Previous Month"><i class="bi bi-chevron-left"></i></button>
+            </div>
+            <h5 id="calendar-month-year"></h5>
+            <div class="nav-buttons">
+                <button id="next-month" aria-label="Next Month"><i class="bi bi-chevron-right"></i></button>
+            </div>
+        </div>
+        <div class="calendar-body">
+            <div class="calendar-grid">
+                <div class="day-name">Mon</div><div class="day-name">Tue</div><div class="day-name">Wed</div>
+                <div class="day-name">Thu</div><div class="day-name">Fri</div><div class="day-name">Sat</div>
+                <div class="day-name">Sun</div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const scheduleData = JSON.parse('{{ schedule_data_json|escapejs|default:"[]" }}');
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const calendarGrid = document.querySelector('.calendar-grid');
+        const monthYearElement = document.getElementById('calendar-month-year');
+        const prevMonthButton = document.getElementById('prev-month');
+        const nextMonthButton = document.getElementById('next-month');
+
+        let currentDate = new Date();
+
+        function renderCalendar(date) {
+            while (calendarGrid.children.length > 7) {
+                calendarGrid.removeChild(calendarGrid.lastChild);
+            }
+
+            const year = date.getFullYear();
+            const month = date.getMonth();
+
+            const monthNames = ["January", "February", "March", "April", "May", "June",
+                                "July", "August", "September", "October", "November", "December"];
+            monthYearElement.textContent = `${monthNames[month]} ${year}`;
+
+            let firstDayOfMonth = new Date(year, month, 1).getDay();
+            firstDayOfMonth = (firstDayOfMonth === 0) ? 6 : firstDayOfMonth - 1;
+
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const today = new Date();
+
+            for (let i = 0; i < firstDayOfMonth; i++) {
+                const emptyDay = document.createElement('div');
+                emptyDay.classList.add('day', 'empty');
+                calendarGrid.appendChild(emptyDay);
+            }
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dayElement = document.createElement('div');
+                dayElement.classList.add('day');
+
+                const dayNumberSpan = document.createElement('span');
+                dayNumberSpan.classList.add('day-number');
+                dayNumberSpan.textContent = day;
+                dayElement.appendChild(dayNumberSpan);
+
+                if (day === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
+                    dayElement.classList.add('today');
+                }
+
+                const eventListDiv = document.createElement('div');
+                eventListDiv.classList.add('event-list');
+
+                const dateForThisCalendarDay = new Date(year, month, day);
+                let dayOfWeekForThisCalendarDay = dateForThisCalendarDay.getDay();
+                dayOfWeekForThisCalendarDay = (dayOfWeekForThisCalendarDay === 0) ? 6 : dayOfWeekForThisCalendarDay - 1;
+
+                scheduleData.forEach(function(event) {
+                    if (event.day === dayOfWeekForThisCalendarDay) {
+                        const eventElement = document.createElement('div');
+                        eventElement.classList.add('event');
+                        // Saat, Ders Kodu ve Lokasyon bilgisini ekle
+                        let eventText = `<span class="event-time">${event.start_time}</span> ${event.title}`;
+                        if (event.location) {
+                            eventText += ` <span class="event-location">(${event.location})</span>`;
+                        }
+                        eventElement.innerHTML = eventText;
+                        // Tooltip için daha fazla bilgi
+                        eventElement.title = `${event.title} (${event.start_time}-${event.end_time})${event.location ? ' at ' + event.location : ''}`;
+                        eventListDiv.appendChild(eventElement);
+                    }
+                });
+
+                if(eventListDiv.hasChildNodes()){
+                    dayElement.appendChild(eventListDiv);
+                }
+                calendarGrid.appendChild(dayElement);
+            }
+
+            const totalCells = firstDayOfMonth + daysInMonth;
+            const remainingCells = (7 - (totalCells % 7)) % 7;
+            for (let i = 0; i < remainingCells; i++) {
+                 const emptyDay = document.createElement('div');
+                emptyDay.classList.add('day', 'empty', 'other-month');
+                calendarGrid.appendChild(emptyDay);
+            }
+        }
+
+        prevMonthButton.addEventListener('click', function() {
+            currentDate.setMonth(currentDate.getMonth() - 1);
+            renderCalendar(currentDate);
+        });
+
+        nextMonthButton.addEventListener('click', function() {
+            currentDate.setMonth(currentDate.getMonth() + 1);
+            renderCalendar(currentDate);
+        });
+
+        renderCalendar(currentDate);
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,18 @@
+<div class="announcement-card mb-4">
+    <h5>{{ announcement.title }}</h5>
+    <div class="announcement-meta mb-2">
+        <small class="text-muted">{{ announcement.created_at|date:"d.m.Y H:i" }}</small>
+    </div>
+    <div class="announcement-content mb-2">
+        {{ announcement.content|linebreaksbr }}
+    </div>
+
+    {% if "Emerging Technologies" in announcement.title %}
+     <div class="announcement-attachments">
+        <a href="#" class="attachment-link">
+            <i class="bi bi-file-earmark-text-fill"></i>
+            document.pdf
+        </a>
+     </div>
+    {% endif %}
+</div>

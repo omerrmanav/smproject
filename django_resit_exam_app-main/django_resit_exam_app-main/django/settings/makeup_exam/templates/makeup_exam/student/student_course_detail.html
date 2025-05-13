@@ -1,0 +1,161 @@
+{% extends 'makeup_exam/base.html' %}
+
+{% block title %}{{ course.course_name }} Detayları{% endblock %}
+
+{% block sidebar_links %}
+    
+    <li class="nav-item">
+        <a class="nav-link {% if request.resolver_match.url_name == 'student_dashboard' %}active{% endif %}" href="{% url 'student_dashboard' %}">
+            <i class="bi bi-grid-1x2-fill"></i> Dashboard
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if request.resolver_match.url_name == 'student_announcements' %}active{% endif %}" href="{% url 'student_announcements' %}">
+            <i class="bi bi-megaphone-fill"></i> Announcement
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if request.resolver_match.url_name == 'student_schedule' %}active{% endif %}" href="{% url 'student_schedule' %}">
+            <i class="bi bi-calendar-week-fill"></i> Schedule
+        </a>
+    </li>
+    <li class="nav-item"> <a class="nav-link" href="{% url 'stix_page' %}"><span class="badge bg-warning text-dark">S</span> STIX</a></li>
+    <li class="nav-item"> <a class="nav-link" href="{% url 'obs_page' %}"><span class="badge bg-primary">O</span> OBS</a></li>
+    <li class="nav-item"> <a class="nav-link" href="{% url 'alms_page' %}"><span class="badge bg-danger">A</span> ALMS</a></li>
+{% endblock %}
+
+{% block page_title %}{{ page_title }}{% endblock %} 
+
+{% block content %}
+
+    
+    <div class="grade-summary mb-4">
+        <div class="grade-item">
+            <span class="grade-label">Final Letter Grade</span>
+            
+            {% if enrollment.resit_grade_entry and enrollment.resit_grade_entry.grade is not None %}
+                {% with new_grade=enrollment.resit_grade_entry.get_new_letter_grade_with_resit %}
+                    <span class="grade-value grade-{{ new_grade|lower }}">
+                        {{ new_grade }}
+                    </span>
+                    <small class="d-block text-muted">(After Resit)</small>
+                {% endwith %}
+            {% else %}
+                
+                <span class="grade-value grade-{{ enrollment.get_letter_grade|lower }}">
+                    {{ enrollment.get_letter_grade }}
+                </span>
+            {% endif %}
+        </div>
+
+        
+        {% if enrollment.resit_grade_entry and enrollment.resit_grade_entry.grade is not None %}
+        <div class="grade-item">
+            <span class="grade-label">Resit Exam Grade</span>
+            <span class="grade-value">
+                {{ enrollment.resit_grade_entry.grade }}
+            </span>
+        </div>
+        {% endif %}
+    </div>
+
+    
+    {% with resit_announcements_for_course=course.resit_exam_details.all %}
+        
+        {% if enrollment.is_eligible_for_makeup or enrollment.applied_for_makeup or enrollment.resit_grade_entry %}
+            {% if resit_announcements_for_course %}
+                <div class="resit-details mb-4">
+                    <h5>Resit Exam Details</h5>
+                    {% for resit_ann in resit_announcements_for_course %}
+                        {% if forloop.first %} 
+                            {% if resit_ann.exam_datetime %}
+                                <p><strong><i class="bi bi-calendar-event me-1"></i>Time:</strong> {{ resit_ann.exam_datetime|date:"d M Y, H:i" }}</p>
+                            {% endif %}
+                            {% if resit_ann.exam_place %}
+                                <p><strong><i class="bi bi-geo-alt-fill me-1"></i>Place:</strong> {{ resit_ann.exam_place }}</p>
+                            {% endif %}
+                            {% if resit_ann.additional_info %}
+                                 <p><strong><i class="bi bi-info-circle-fill me-1"></i>Rules/Info:</strong><br>{{ resit_ann.additional_info|linebreaksbr }}</p>
+                            {% endif %}
+                            {% if resit_ann.attached_file %}
+                                <p><strong><i class="bi bi-paperclip me-1"></i>Attachment:</strong>
+                                    <a href="{{ resit_ann.attached_file.url }}" target="_blank" class="attachment-link ms-1" download>
+                                        <i class="bi bi-file-earmark-arrow-down-fill"></i>
+                                        {{ resit_ann.attached_file.name|cut:"resit_exam_files/"|cut:resit_ann.id|cut:"/"|default:"View File" }}
+                                    </a>
+                                </p>
+                            {% endif %}
+                            {% if not resit_ann.exam_datetime and not resit_ann.exam_place and not resit_ann.additional_info and not resit_ann.attached_file %}
+                                <p class="text-muted">Detailed resit exam information will be announced by the faculty.</p>
+                            {% endif %}
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            {% elif enrollment.is_eligible_for_makeup or enrollment.applied_for_makeup or enrollment.resit_grade_entry %}
+                 
+                <div class="alert alert-light mb-4" role="alert">
+                  Resit exam details will be announced by the faculty. Please check announcements page.
+                </div>
+            {% endif %}
+        {% endif %}
+    {% endwith %}
+
+
+    
+    {% if enrollment.is_eligible_for_makeup and not enrollment.resit_grade_entry %} 
+        <div class="resit-registration text-center mb-4">
+            <form method="post" action="{% url 'apply_for_resit' enrollment.id %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-resit-register" {% if enrollment.applied_for_makeup %}disabled{% endif %}>
+                    {% if enrollment.applied_for_makeup %}
+                        <i class="bi bi-check-circle-fill me-2"></i>Registered for Resit
+                    {% else %}
+                        Register For Resit
+                    {% endif %}
+                </button>
+            </form>
+            {% if enrollment.applied_for_makeup %}
+                <small class="d-block text-muted mt-2">You have successfully registered for the resit exam.</small>
+            {% endif %}
+        </div>
+    {% elif enrollment.applied_for_makeup and not enrollment.resit_grade_entry %}
+          <div class="alert alert-success text-center" role="alert">
+            You have already registered for the resit exam for this course. Grade is pending.
+          </div>
+    {% endif %}
+
+    
+     <div class="card shadow-sm mb-4">
+        <div class="card-header bg-light">
+           <h5 class="mb-0">Original Grade Details</h5>
+        </div>
+        <div class="card-body">
+             <dl class="row mb-0">
+                <dt class="col-sm-4">Midterm Grade:</dt>
+                <dd class="col-sm-8">{{ enrollment.midterm_grade|default:"-" }} (Weight: {{ course.midterm_weight }}%)</dd>
+
+                <dt class="col-sm-4">Final Grade (Original):</dt>
+                <dd class="col-sm-8">{{ enrollment.final_grade|default:"-" }} (Weight: {{ course.final_weight }}%)</dd>
+
+                <hr class="my-2">
+
+                <dt class="col-sm-4">Calculated Score (Original):</dt>
+                <dd class="col-sm-8">{{ enrollment.calculate_final_score|default:"-" }}</dd>
+
+                <dt class="col-sm-4">Letter Grade (Original):</dt>
+                <dd class="col-sm-8">
+                    <strong class="grade-value grade-{{ enrollment.get_letter_grade|lower }}">
+                        {{ enrollment.get_letter_grade }}
+                    </strong>
+                </dd>
+            </dl>
+        </div>
+    </div>
+
+    <div class="mt-4 pt-3 border-top">
+         <a href="{% url 'student_dashboard' %}" class="btn btn-secondary btn-sm">
+             <i class="bi bi-arrow-left-short"></i> Back to Dashboard
+         </a>
+     </div>
+
+{% endblock %}

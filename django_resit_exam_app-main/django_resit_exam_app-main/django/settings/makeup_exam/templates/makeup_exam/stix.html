@@ -1,0 +1,50 @@
+{% extends 'makeup_exam/base.html' %}
+
+{% block title %}STIX{% endblock %}
+
+{% block sidebar_links %}
+    {% if user.profile.role == 'student' %}
+        <li class="nav-item"> <a class="nav-link" href="{% url 'student_dashboard' %}"><i class="bi bi-grid-1x2-fill"></i> Dashboard</a></li>
+        <li class="nav-item"> <a class="nav-link" href="{% url 'student_announcements' %}"><i class="bi bi-megaphone-fill"></i> Announcement</a></li>
+        <li class="nav-item"> <a class="nav-link" href="{% url 'student_schedule' %}"><i class="bi bi-calendar-week-fill"></i> Schedule</a></li>
+        <li class="nav-item"> <a class="nav-link active" href="{% url 'stix_page' %}"><span class="badge bg-warning text-dark">S</span> STIX</a></li>
+        <li class="nav-item"> <a class="nav-link" href="{% url 'obs_page' %}"><span class="badge bg-primary">O</span> OBS</a></li>
+        <li class="nav-item"> <a class="nav-link" href="{% url 'alms_page' %}"><span class="badge bg-danger">A</span> ALMS</a></li>
+    {% elif user.profile.role == 'teacher' %}
+        <li class="nav-item"> <a class="nav-link" href="{% url 'teacher_dashboard' %}"><i class="bi bi-grid-1x2-fill"></i> Dashboard</a></li>
+        <li class="nav-item"> <a class="nav-link" href="{% url 'teacher_announcements' %}"><i class="bi bi-megaphone-fill"></i> Announcement</a></li>
+        <li class="nav-item"> <a class="nav-link" href="{% url 'teacher_grades' %}"><i class="bi bi-pencil-square"></i> Grades</a></li>
+        <li class="nav-item"> <a class="nav-link" href="{% url 'teacher_resit_applications' %}"><i class="bi bi-person-check-fill"></i> Resit Apps</a></li>
+        <li class="nav-item"> <a class="nav-link" href="{% url 'teacher_schedule' %}"><i class="bi bi-calendar-week-fill"></i> Schedule</a></li>
+        <li class="nav-item"> <a class="nav-link active" href="{% url 'stix_page' %}"><span class="badge bg-warning text-dark">S</span> STIX</a></li>
+        <li class="nav-item"> <a class="nav-link" href="{% url 'obs_page' %}"><span class="badge bg-primary">O</span> OBS</a></li>
+        <li class="nav-item"> <a class="nav-link" href="{% url 'alms_page' %}"><span class="badge bg-danger">A</span> ALMS</a></li>
+     {% elif user.profile.role == 'faculty' %}
+         <li class="nav-item"> <a class="nav-link" href="{% url 'faculty_dashboard' %}"><i class="bi bi-person-workspace"></i> Dashboard</a></li>
+         <li class="nav-item"> <a class="nav-link active" href="{% url 'stix_page' %}"><span class="badge bg-warning text-dark">S</span> STIX</a></li>
+         <li class="nav-item"> <a class="nav-link" href="{% url 'obs_page' %}"><span class="badge bg-primary">O</span> OBS</a></li>
+         <li class="nav-item"> <a class="nav-link" href="{% url 'alms_page' %}"><span class="badge bg-danger">A</span> ALMS</a></li>
+    {% endif %}
+{% endblock %}
+
+{% block page_title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+    <style>
+        .iframe-container { position: relative; overflow: hidden; width: 100%; height: calc(100vh - 150px); border: 1px solid #dee2e6; border-radius: 0.375rem; }
+        .iframe-container iframe { position: absolute; top: 0; left: 0; bottom: 0; right: 0; width: 100%; height: 100%; border: none; }
+    </style>
+
+    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+      <i class="bi bi-exclamation-triangle-fill me-2"></i>
+      You are viewing STIX within RApp. Some features might be limited.
+      <a href="https://stix.uskudar.edu.tr" target="_blank" class="alert-link ms-2">Open STIX in a new tab</a>.
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+
+    <div class="iframe-container">
+        <iframe src="https://stix.uskudar.edu.tr" title="STIX External Site">
+            Your browser does not support iframes. Please visit <a href="https://stix.uskudar.edu.tr" target="_blank">https://stix.uskudar.edu.tr</a> directly.
+        </iframe>
+    </div>
+{% endblock %}

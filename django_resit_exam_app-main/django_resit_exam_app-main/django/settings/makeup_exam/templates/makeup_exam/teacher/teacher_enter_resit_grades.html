@@ -1,0 +1,109 @@
+{% extends 'makeup_exam/base.html' %}
+
+{% block title %}Bütünleme Not Girişi: {{ course.course_code }}{% endblock %}
+
+{% block sidebar_links %}
+    
+    <li class="nav-item"> <a class="nav-link {% if request.resolver_match.url_name == 'teacher_dashboard' %}active{% endif %}" href="{% url 'teacher_dashboard' %}"><i class="bi bi-grid-1x2-fill"></i> Dashboard</a></li>
+    <li class="nav-item"> <a class="nav-link {% if request.resolver_match.url_name == 'teacher_announcements' %}active{% endif %}" href="{% url 'teacher_announcements' %}"><i class="bi bi-megaphone-fill"></i> Announcement</a></li>
+    <li class="nav-item"> <a class="nav-link {% if request.resolver_match.url_name == 'teacher_grades' or 'teacher_course_detail' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'teacher_grades' %}"><i class="bi bi-pencil-square"></i> Grades</a></li>
+    <li class="nav-item"> <a class="nav-link active" href="{% url 'teacher_resit_applications' %}"><i class="bi bi-person-check-fill"></i> Resit Apps</a></li>
+    <li class="nav-item"> <a class="nav-link {% if request.resolver_match.url_name == 'teacher_schedule' %}active{% endif %}" href="{% url 'teacher_schedule' %}"><i class="bi bi-calendar-week-fill"></i> Schedule</a></li>
+    <li class="nav-item"> <a class="nav-link" href="{% url 'stix_page' %}"><span class="badge bg-warning text-dark">S</span> STIX</a></li>
+    <li class="nav-item"> <a class="nav-link" href="{% url 'obs_page' %}"><span class="badge bg-primary">O</span> OBS</a></li>
+    <li class="nav-item"> <a class="nav-link" href="{% url 'alms_page' %}"><span class="badge bg-danger">A</span> ALMS</a></li>
+{% endblock %}
+
+{% block page_title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">Enter Resit Exam Grades for {{ course.course_name }} ({{ course.course_code }})</h5>
+        </div>
+        <div class="card-body">
+            <p class="text-muted small">
+                Enter the resit exam grade for each student below.
+                The new overall average and letter grade will be calculated using this resit grade as the final grade.
+            </p>
+
+            {% if student_forms_data %}
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover table-sm align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width: 25%;">Student</th>
+                                    <th style="width: 10%;">Midterm (%{{ course.midterm_weight }})</th>
+                                    <th style="width: 10%;">Original Final</th>
+                                    <th style="width: 10%;">Original Letter</th>
+                                    <th style="width: 15%;">Resit Grade</th>
+                                    <th style="width: 15%;">New Score (with Resit)</th>
+                                    <th style="width: 15%;">New Letter Grade (with Resit)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for enrollment, form, resit_grade_instance in student_forms_data %}
+                                    <tr>
+                                        <td>
+                                            {{ enrollment.student.get_full_name|default:enrollment.student.username }}
+                                            {{ form.enrollment_id }} 
+                                        </td>
+                                        <td>{{ enrollment.midterm_grade|default:"-" }}</td>
+                                        <td>{{ enrollment.final_grade|default:"-" }}</td> 
+                                        <td>
+                                            <span class="badge grade-value bg-dark text-light px-2 py-1">
+                                                {{ enrollment.get_letter_grade }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            
+                                            {{ form.grade }}
+                                            {% if form.grade.errors %}
+                                                <div class="text-danger small mt-1">{{ form.grade.errors|striptags }}</div>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            
+                                            {% if resit_grade_instance and resit_grade_instance.grade is not None %}
+                                                {{ resit_grade_instance.calculate_new_average_with_resit|default:"-" }}
+                                            {% else %}
+                                                -
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            
+                                            {% if resit_grade_instance and resit_grade_instance.grade is not None %}
+                                                <span class="badge grade-value bg-dark text-light px-2 py-1">
+                                                    {{ resit_grade_instance.get_new_letter_grade_with_resit }}
+                                                </span>
+                                            {% else %}
+                                                -
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mt-3">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save me-1"></i> Save Resit Grades
+                        </button>
+                        <a href="{% url 'teacher_resit_applications' %}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left-short"></i> Back to Resit Applications
+                        </a>
+                    </div>
+                </form>
+            {% else %}
+                <div class="alert alert-info">
+                    No students have applied for a resit exam for this course.
+                </div>
+                 <a href="{% url 'teacher_resit_applications' %}" class="btn btn-secondary mt-2">
+                    <i class="bi bi-arrow-left-short"></i> Back to Resit Applications
+                </a>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

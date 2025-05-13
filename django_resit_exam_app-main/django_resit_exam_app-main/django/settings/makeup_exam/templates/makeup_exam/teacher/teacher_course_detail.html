@@ -1,0 +1,162 @@
+{% extends 'makeup_exam/base.html' %}
+
+{% block title %}Ders Detayları: {{ course.course_code }}{% endblock %}
+
+{% block sidebar_links %}
+    
+    <li class="nav-item"> <a class="nav-link {% if request.resolver_match.url_name == 'teacher_dashboard' %}active{% endif %}" href="{% url 'teacher_dashboard' %}"><i class="bi bi-grid-1x2-fill"></i> Dashboard</a></li>
+    <li class="nav-item"> <a class="nav-link {% if request.resolver_match.url_name == 'teacher_announcements' %}active{% endif %}" href="{% url 'teacher_announcements' %}"><i class="bi bi-megaphone-fill"></i> Announcement</a></li>
+    <li class="nav-item"> <a class="nav-link {% if request.resolver_match.url_name == 'teacher_grades' or 'teacher_course_detail' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'teacher_grades' %}"><i class="bi bi-pencil-square"></i> Grades</a></li>
+    <li class="nav-item"> <a class="nav-link {% if request.resolver_match.url_name == 'teacher_resit_applications' %}active{% endif %}" href="{% url 'teacher_resit_applications' %}"><i class="bi bi-person-check-fill"></i> Resit Apps</a></li>
+    <li class="nav-item"> <a class="nav-link {% if request.resolver_match.url_name == 'teacher_schedule' %}active{% endif %}" href="{% url 'teacher_schedule' %}"><i class="bi bi-calendar-week-fill"></i> Schedule</a></li>
+    <li class="nav-item"> <a class="nav-link" href="{% url 'stix_page' %}"><span class="badge bg-warning text-dark">S</span> STIX</a></li>
+    <li class="nav-item"> <a class="nav-link" href="{% url 'obs_page' %}"><span class="badge bg-primary">O</span> OBS</a></li>
+    <li class="nav-item"> <a class="nav-link" href="{% url 'alms_page' %}"><span class="badge bg-danger">A</span> ALMS</a></li>
+{% endblock %}
+
+{% block page_title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+
+    
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+             <h5 class="mb-0">Course Information & Weights</h5>
+             <span class="badge bg-secondary">{{ course.course_code }}</span>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <dl class="row">
+                        <dt class="col-sm-4">Course Name:</dt><dd class="col-sm-8">{{ course.course_name }}</dd>
+                        <dt class="col-sm-4">Credits:</dt><dd class="col-sm-8">{{ course.credits }}</dd>
+                        <dt class="col-sm-4">Instructor:</dt><dd class="col-sm-8">{{ course.teacher.get_full_name|default:course.teacher.username }}</dd>
+                    </dl>
+                </div>
+                <div class="col-md-6 border-start">
+                    <h6>Update Grading Weights</h6>
+                    <form method="post" id="weightForm">
+                        {% csrf_token %}
+                        {% if weight_form.non_field_errors %}<div class="alert alert-danger alert-sm py-1 px-2 mb-2">{% for error in weight_form.non_field_errors %}{{ error }}{% endfor %}</div>{% endif %}
+                        <div class="row g-2 align-items-center mb-2">
+                            <div class="col-auto"><label for="{{ weight_form.midterm_weight.id_for_label }}" class="col-form-label col-form-label-sm">{{ weight_form.midterm_weight.label }}</label></div>
+                            <div class="col">{{ weight_form.midterm_weight }}</div>
+                            {% if weight_form.midterm_weight.errors %}<div class="text-danger small mt-1">{{ weight_form.midterm_weight.errors|striptags }}</div>{% endif %}
+                        </div>
+                         <div class="row g-2 align-items-center mb-2">
+                            <div class="col-auto"><label for="{{ weight_form.final_weight.id_for_label }}" class="col-form-label col-form-label-sm">{{ weight_form.final_weight.label }}</label></div>
+                            <div class="col">{{ weight_form.final_weight }}</div>
+                            {% if weight_form.final_weight.errors %}<div class="text-danger small mt-1">{{ weight_form.final_weight.errors|striptags }}</div>{% endif %}
+                        </div>
+                        <button type="submit" name="update_weights" class="btn btn-sm btn-outline-primary w-100"><i class="bi bi-arrow-repeat"></i> Update Weights</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    
+    <div class="card shadow-sm mb-4">
+         <div class="card-header bg-light">
+             <h5 class="mb-0">Upload Grades via CSV</h5>
+        </div>
+        <div class="card-body">
+             <form method="post" enctype="multipart/form-data"> 
+                 {% csrf_token %}
+                 <div class="row g-3 align-items-end"> 
+                     <div class="col-md-4">
+                         <label for="{{ upload_form.grade_type.id_for_label }}" class="form-label">{{ upload_form.grade_type.label }}</label>
+                         {{ upload_form.grade_type }}
+                         {% if upload_form.grade_type.errors %}<div class="invalid-feedback d-block">{{ upload_form.grade_type.errors|striptags }}</div>{% endif %}
+                     </div>
+                     <div class="col-md-6">
+                         <label for="{{ upload_form.csv_file.id_for_label }}" class="form-label">{{ upload_form.csv_file.label }}</label>
+                         {{ upload_form.csv_file }}
+                         <div class="form-text">{{ upload_form.csv_file.help_text }}</div>
+                         {% if upload_form.csv_file.errors %}<div class="invalid-feedback d-block">{{ upload_form.csv_file.errors|striptags }}</div>{% endif %}
+                     </div>
+                     <div class="col-md-2">
+                         <button type="submit" name="upload_grades" class="btn btn-success w-100">
+                             <i class="bi bi-upload me-1"></i> Upload
+                         </button>
+                     </div>
+                 </div>
+             </form>
+
+             
+             {% if upload_results is not None %}
+                 <hr class="my-3">
+                 <h6>Upload Results:</h6>
+                 <div class="table-responsive" style="max-height: 300px; overflow-y: auto;"> 
+                     <table class="table table-sm table-striped table-bordered small">
+                         <thead>
+                             <tr>
+                                 <th>Username</th>
+                                 <th>Grade in File</th>
+                                 <th>Status</th>
+                                 <th>Message</th>
+                             </tr>
+                         </thead>
+                         <tbody>
+                             {% for result in upload_results %}
+                                 <tr class="{% if result.status == 'Error' or result.status == 'Not Found' or result.status == 'Skipped' %}table-danger{% elif result.status == 'Success' %}table-success{% endif %}">
+                                     <td>{{ result.username }}</td>
+                                     <td>{{ result.grade_str }}</td>
+                                     <td>{{ result.status }}</td>
+                                     <td>{{ result.message }}</td>
+                                 </tr>
+                             {% empty %}
+                                 <tr>
+                                     <td colspan="4" class="text-center text-muted">No results to display.</td>
+                                 </tr>
+                             {% endfor %}
+                         </tbody>
+                     </table>
+                 </div>
+             {% endif %}
+             
+        </div>
+    </div>
+    
+
+
+    
+    <div class="card shadow-sm">
+         <div class="card-header bg-light">
+             <h5 class="mb-0">Student Grades (Manual Entry)</h5> 
+        </div>
+        <div class="card-body p-0">
+            {% if student_form_pairs %}
+                <form method="post" id="gradeForm">
+                    {% csrf_token %}
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover table-sm mb-0 align-middle">
+                            <thead class="table-light">
+                                <tr><th>Student</th><th>Midterm Grade (%{{ course.midterm_weight }})</th><th>Final Grade (%{{ course.final_weight }})</th><th>Score</th><th>Letter Grade</th><th>Resit App.?</th></tr>
+                            </thead>
+                            <tbody>
+                                {% for enrollment, form in student_form_pairs %}
+                                <tr>
+                                    <td>{{ enrollment.student.get_full_name|default:enrollment.student.username }}</td>
+                                    <td>{{ form.midterm_grade }}{% if form.midterm_grade.errors %}<div class="text-danger small mt-1">{{ form.midterm_grade.errors|striptags }}</div>{% endif %}</td>
+                                    <td>{{ form.final_grade }}{% if form.final_grade.errors %}<div class="text-danger small mt-1">{{ form.final_grade.errors|striptags }}</div>{% endif %}{{ form.enrollment_id }}</td>
+                                    <td>{{ enrollment.calculate_final_score|default:"-" }}</td><td>{{ enrollment.get_letter_grade }}</td>
+                                    <td>{% if enrollment.applied_for_makeup %}<span class="badge bg-success">Yes</span>{% else %}<span class="badge bg-secondary">No</span>{% endif %}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="p-3 border-top">
+                        <button type="submit" name="update_grades" class="btn btn-primary"><i class="bi bi-save"></i> Save Grades</button>
+                        <a href="{% url 'teacher_grades' %}" class="btn btn-secondary"><i class="bi bi-arrow-left-short"></i> Back to Course List</a>
+                    </div>
+                </form>
+            {% else %}
+                 <div class="p-3 text-muted">No students are currently enrolled in this course.</div>
+                 <div class="p-3 border-top"><a href="{% url 'teacher_grades' %}" class="btn btn-secondary"><i class="bi bi-arrow-left-short"></i> Back to Course List</a></div>
+            {% endif %}
+        </div>
+    </div>
+
+{% endblock %}

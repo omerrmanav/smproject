@@ -1,0 +1,99 @@
+{% extends 'makeup_exam/base.html' %}
+
+{% block title %}Not Girişi - Ders Seçimi{% endblock %}
+
+{% block sidebar_links %}
+    
+    <li class="nav-item">
+        <a class="nav-link {% if request.resolver_match.url_name == 'teacher_dashboard' %}active{% endif %}" href="{% url 'teacher_dashboard' %}">
+            <i class="bi bi-grid-1x2-fill"></i> Dashboard
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if request.resolver_match.url_name == 'teacher_announcements' %}active{% endif %}" href="{% url 'teacher_announcements' %}">
+            <i class="bi bi-megaphone-fill"></i> Announcement
+        </a>
+    </li>
+     <li class="nav-item">
+        
+        
+        <a class="nav-link {% if request.resolver_match.url_name == 'teacher_grades' or 'teacher_course_detail' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'teacher_grades' %}">
+             <i class="bi bi-pencil-square"></i> Grades
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link {% if request.resolver_match.url_name == 'teacher_schedule' %}active{% endif %}" href="{% url 'teacher_schedule' %}">
+            <i class="bi bi-calendar-week-fill"></i> Schedule
+        </a>
+    </li>
+    
+    <li class="nav-item"> <a class="nav-link" href="#"><span class="badge bg-warning text-dark">S</span> STIX</a></li>
+    <li class="nav-item"> <a class="nav-link" href="#"><span class="badge bg-primary">O</span> OBS</a></li>
+    <li class="nav-item"> <a class="nav-link" href="#"><span class="badge bg-danger">A</span> ALMS</a></li>
+{% endblock %}
+
+{% block page_title %}{{ page_title }}{% endblock %} 
+
+{% block content %}
+    
+    <style>
+        .course-select-card {
+            background-color: #fff;
+            border-radius: 0.5rem; 
+            padding: 1rem 1.5rem; 
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between; 
+            align-items: center;
+            border: 1px solid #e9ecef; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.03); 
+            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+            text-decoration: none;
+            color: #495057; 
+            font-weight: 500; 
+        }
+        .course-select-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+            border-color: #cfe2ff; 
+            color: #0d6efd; 
+        }
+        .course-select-card .course-name {
+            flex-grow: 1; 
+            margin-right: 1rem; 
+        }
+        .course-select-card .bi-chevron-right {
+            color: #adb5bd; 
+            transition: color 0.2s ease;
+        }
+         .course-select-card:hover .bi-chevron-right {
+             color: #0d6efd; 
+         }
+    </style>
+
+    <div class="alert alert-info" role="alert">
+      <i class="bi bi-info-circle-fill me-2"></i>
+      Please select a course below to enter or modify student grades.
+    </div>
+
+    {% if courses %}
+        <div class="row">
+            {% for course in courses %}
+                <div class="col-lg-6"> 
+                    
+                    <a href="{% url 'teacher_course_detail' course.id %}" class="course-select-card">
+                        <span class="course-name">
+                            {{ course.course_code }} - {{ course.course_name }}
+                        </span>
+                        <i class="bi bi-chevron-right"></i> 
+                    </a>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert alert-warning" role="alert">
+          <i class="bi bi-exclamation-triangle-fill me-2"></i>
+          You are not currently assigned to any courses.
+        </div>
+    {% endif %}
+{% endblock %}
